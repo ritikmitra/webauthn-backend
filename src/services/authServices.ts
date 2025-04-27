@@ -7,12 +7,17 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
   AuthenticatorTransportFuture,
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
 import { Credential } from '../../generated/prisma';
+import { isoBase64URL } from "@simplewebauthn/server/helpers"
+import generateToken from '../utils/authentication';
+
 
 const rpName = process.env.RP_NAME || 'My App';
 const rpID = process.env.RP_ID || 'localhost';
-const origin = `http://${rpID}`;
+const origin = `http://${rpID}:5000`;
 
 const expectedOrigin = origin;
 
@@ -29,7 +34,7 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
 
   const userId = Buffer.from(email, 'utf-8');
 
-  const options = generateRegistrationOptions({
+  const options = await generateRegistrationOptions({
     rpName,
     rpID,
     userID: userId,
@@ -43,7 +48,7 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
     },
   });
 
-  challenges[email] = (await options).challenge;
+  challenges[email] = options.challenge;
 
   // Save user temporarily (only username, real registration after verify)
   await prisma.user.create({
@@ -55,7 +60,7 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
   return { options };
 };
 
-export const verifyRegistration = async (email: string, attestationResponse: any) => {
+export const verifyRegistration = async (email: string, attestationResponse: RegistrationResponseJSON) => {
   const expectedChallenge = challenges[email];
   if (!expectedChallenge) {
     throw new Error('No challenge found for user');
@@ -85,6 +90,15 @@ export const verifyRegistration = async (email: string, attestationResponse: any
     },
   });
 
+  //enble passkey login for the user
+
+  await prisma.user.update({
+    where: { email },
+    data: {
+      isPasskey: true,
+    }
+  })
+
   delete challenges[email];
 };
 
@@ -99,23 +113,23 @@ export const generateAuthenticationOptionsCustom = async (email: string) => {
     throw new Error('User or credentials not found');
   }
 
-  const options = generateAuthenticationOptions({
+  const options = await generateAuthenticationOptions({
     timeout: 60000,
     rpID,
     allowCredentials: user.credentials.map((cred: Credential) => ({
-      id: Buffer.from(cred.credentialID).toString('base64'),
+      id: isoBase64URL.fromBuffer(cred.credentialID),
       type: 'public-key',
-      transports: cred.transports as AuthenticatorTransportFuture[], 
+      transports: cred.transports as AuthenticatorTransportFuture[],
     })),
     userVerification: 'preferred',
   });
 
-  challenges[email] = (await options).challenge;
+  challenges[email] = options.challenge;
 
   return { options };
 };
 
-export const verifyAuthentication = async (email: string, assertionResponse: any) => {
+export const verifyAuthentication = async (email: string, assertionResponse: AuthenticationResponseJSON) => {
   const expectedChallenge = challenges[email];
   if (!expectedChallenge) {
     throw new Error('No challenge found for user');
@@ -133,7 +147,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: any
 
   // Find the credential that matches the credentialID from the assertionResponse
   const dbAuthenticator = user.credentials.find(
-    (credential: Credential) => credential.credentialID === assertionResponse.id
+    (credential: Credential) =>  isoBase64URL.fromBuffer(credential.credentialID) === assertionResponse.id
   );
 
   if (!dbAuthenticator) {
@@ -147,7 +161,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: any
     expectedOrigin,
     expectedRPID: rpID,
     credential: {
-      id: Buffer.from(dbAuthenticator.credentialID).toString('base64'),
+      id:  isoBase64URL.fromBuffer(dbAuthenticator.credentialID),
       publicKey: dbAuthenticator.credentialPublicKey,
       transports: dbAuthenticator.transports as AuthenticatorTransportFuture[],
       counter: dbAuthenticator.counter,
@@ -164,8 +178,14 @@ export const verifyAuthentication = async (email: string, assertionResponse: any
     data: { counter: verification.authenticationInfo.newCounter },
   });
 
+  // Generate JWT token
+  const token = generateToken({ userId: user.id, username: user.email });
+
+  
   // Clear the challenge after successful verification
   delete challenges[email];
+  
+  return { token };
 };
 
 
@@ -199,11 +219,8 @@ export const simpleLogin = async (email: string, password: string) => {
     throw new Error('Invalid Credentials');
   }
 
-  const token = jwt.sign(
-    { userId: user.id, username: user.email },
-    process.env.JWT_SECRET || 'secret', // You should use a strong secret in real app
-    { expiresIn: '1d' }
-  );
+
+  const token = generateToken({ userId: user.id, username: user.email });
 
   return token;
 };

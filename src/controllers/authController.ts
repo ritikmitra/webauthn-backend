@@ -34,8 +34,9 @@ export const generateAuthenticationOptionsController = async (req: Request, res:
 export const verifyAuthenticationController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, assertionResponse } = req.body;
-    await authService.verifyAuthentication(username, assertionResponse);
-    res.status(200).send('Authentication Verified');
+    const response = await authService.verifyAuthentication(username, assertionResponse);
+    
+    res.status(200).send(response);
   } catch (error) {
     next(error);
   }

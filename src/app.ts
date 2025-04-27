@@ -6,7 +6,10 @@ import { errorHandler } from './middlewares/errorHandler';
 
 export const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5000',  // specify the frontend URL', // Allow all origins for development, restrict in production
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+}));
 app.use(express.json());
 
 // Routes
