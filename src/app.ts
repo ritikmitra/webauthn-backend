@@ -6,8 +6,13 @@ import { errorHandler } from './middlewares/errorHandler';
 
 export const app = express();
 
+const allowedOrigins = [
+    'https://localhost:5000',
+    'http://localhost:5000',
+  ];
+
 app.use(cors({
-    origin: 'http://localhost:5000',  // specify the frontend URL', // Allow all origins for development, restrict in production
+    origin: allowedOrigins,  // specify the frontend URL', // Allow all origins for development, restrict in production
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
 app.use(express.json());

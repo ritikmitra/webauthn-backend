@@ -17,7 +17,7 @@ import generateToken from '../utils/authentication';
 
 const rpName = process.env.RP_NAME || 'My App';
 const rpID = process.env.RP_ID || 'localhost';
-const origin = `http://${rpID}:5000`;
+const origin = process.env.RP_ORIGIN || 'http://localhost:5000'; // Replace with your frontend URL
 
 const expectedOrigin = origin;
 
@@ -31,6 +31,9 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
   if (user) {
     throw new Error('User already exists');
   }
+
+  console.log(`Generating registration options for ${email}`);
+  
 
   const userId = Buffer.from(email, 'utf-8');
 
@@ -184,7 +187,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   
   // Clear the challenge after successful verification
   delete challenges[email];
-  
+
   return { token };
 };
 
