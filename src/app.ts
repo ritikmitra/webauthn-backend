@@ -9,6 +9,7 @@ export const app = express();
 const allowedOrigins = [
     'https://localhost:5000',
     'http://localhost:5000',
+    'https://webauthn-frontend.vercel.app'
   ];
 
 app.use(cors({
