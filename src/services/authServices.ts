@@ -19,6 +19,9 @@ const rpName = process.env.RP_NAME || 'My App';
 const rpID = process.env.RP_ID || 'localhost';
 const origin = process.env.RP_ORIGIN || 'http://localhost:5000'; // Replace with your frontend URL
 
+console.log(rpName, rpID, origin);
+
+
 const expectedOrigin = origin;
 
 // In-memory store for challenges (you can replace this with Redis or database if needed)
