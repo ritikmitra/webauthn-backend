@@ -9,7 +9,7 @@ export const app = express();
 const allowedOrigins = [
     'https://localhost:5000',
     'http://localhost:5000',
-    'https://webauthn-frontend.vercel.app'
+    'https://webauthn.ritikmitra.me'
   ];
 
 app.use(cors({
