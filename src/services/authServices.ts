@@ -1,6 +1,5 @@
 import prisma from '../prisma/client';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -13,15 +12,12 @@ import {
 import { Credential } from '../../generated/prisma';
 import { isoBase64URL } from "@simplewebauthn/server/helpers"
 import generateToken from '../utils/authentication';
+import { AppError } from '../errors/AppError';
 
 
 const rpName = process.env.RP_NAME || 'My App';
 const rpID = process.env.RP_ID || 'localhost';
 const origin = process.env.RP_ORIGIN || 'http://localhost:5000'; // Replace with your frontend URL
-
-console.log(process.env);
-
-console.log(rpName, rpID, origin);
 
 
 const expectedOrigin = origin;
@@ -34,7 +30,7 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (user) {
-    throw new Error('User already exists');
+    throw new AppError('User already exists',400);
   }
 
   console.log(`Generating registration options for ${email}`);
