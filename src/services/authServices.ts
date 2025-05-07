@@ -114,7 +114,7 @@ export const generateAuthenticationOptionsCustom = async (email: string) => {
   });
 
   if (!user || user.credentials.length === 0) {
-    throw new Error('User or credentials not found');
+    throw new AppError('User not found',400);
   }
 
   const options = await generateAuthenticationOptions({
@@ -146,7 +146,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   });
 
   if (!user) {
-    throw new Error('User not found');
+    throw new AppError('User not found',400);
   }
 
   // Find the credential that matches the credentialID from the assertionResponse
@@ -155,7 +155,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   );
 
   if (!dbAuthenticator) {
-    throw new Error('Authenticator not found or not registered');
+    throw new AppError('User not found',400);
   }
 
   // Perform authentication verification
@@ -197,7 +197,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 export const simpleRegister = async (email: string, password: string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    throw new Error('User already exists');
+    throw new AppError('User already exists',400);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
