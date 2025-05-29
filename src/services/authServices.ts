@@ -26,9 +26,9 @@ const expectedOrigin = origin;
 const challenges: Record<string, string> = {};
 
 export const checkEmailExists = async (email: string) => {
-  const user = await prisma.user.findUnique({ where: { email } , include: { credentials: true }});
+  const user = await prisma.user.findUnique({ where: { email }, include: { credentials: true } });
   const isPasskey = user ? user.isPasskey : false;
-  return { user : !!user, isPasskey : isPasskey };
+  return { user: !!user, isPasskey: isPasskey };
 }
 
 
@@ -202,7 +202,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 
 
 // ========== Simple Email + Password Registration ==========
-export const simpleRegister = async (email: string, password: string, deviceToken? : string) => {
+export const simpleRegister = async (email: string, password: string, deviceToken?: string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new AppError('User already exists', 400);
@@ -210,29 +210,29 @@ export const simpleRegister = async (email: string, password: string, deviceToke
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  if (deviceToken){
+  if (deviceToken) {
     await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        notification : {
-          create : {
-            deviceToken : deviceToken
+        notification: {
+          create: {
+            deviceToken: deviceToken
           }
         }
       },
-      include :{
-        notification : true
+      include: {
+        notification: true
       }
     });
+  } else {
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
   }
-
-  await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-    },
-  });
 };
 
 // ========== Simple Email + Password Login ==========
@@ -240,12 +240,12 @@ export const simpleLogin = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !user.password) {
-    throw new AppError('Invalid Credentials',401);
+    throw new AppError('Invalid Credentials', 401);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError('Invalid Credentials',401);
+    throw new AppError('Invalid Credentials', 401);
   }
 
 
