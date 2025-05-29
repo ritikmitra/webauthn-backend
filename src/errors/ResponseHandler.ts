@@ -9,10 +9,11 @@ export class ResponseHandler {
       });
     }
   
-    static sendError(res: Response, message: string, statusCode: number = 500) {
+    static sendError(res: Response, message: string, statusCode: number = 500, data:any = null) {
       res.status(statusCode).json({
         success: false,
         message,
+        data,
       });
     }
   }

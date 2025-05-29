@@ -44,8 +44,8 @@ export const verifyAuthenticationController = async (req: Request, res: Response
 
 export const simpleRegisterController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password } = req.body;
-    await authService.simpleRegister(username, password);
+    const { username, password, deviceToken } = req.body;
+    await authService.simpleRegister(username, password,deviceToken);
     res.status(201).send('User Registered');
   } catch (error) {
     next(error);
@@ -57,6 +57,17 @@ export const simpleLoginController = async (req: Request, res: Response, next: N
     const { username, password } = req.body;
     const token = await authService.simpleLogin(username, password);
     res.json({ token });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const checkEmailExistsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = req.body;
+    const userExists = await authService.checkEmailExists(email);
+    res.json({ userExists });
   } catch (error) {
     next(error);
   }

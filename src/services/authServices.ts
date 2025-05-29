@@ -25,16 +25,15 @@ const expectedOrigin = origin;
 // In-memory store for challenges (you can replace this with Redis or database if needed)
 const challenges: Record<string, string> = {};
 
+export const checkEmailExists = async (email: string) => {
+  const user = await prisma.user.findUnique({ where: { email } , include: { credentials: true }});
+  const isPasskey = user ? user.isPasskey : false;
+  return { user : !!user, isPasskey : isPasskey };
+}
+
+
 // ========== Registration (Passkey) ==========
 export const generateRegistrationOptionsCustom = async (email: string) => {
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (user) {
-    throw new AppError('User already exists',400);
-  }
-
-  console.log(`Generating registration options for ${email}`);
-  
 
   const userId = Buffer.from(email, 'utf-8');
 
@@ -53,6 +52,15 @@ export const generateRegistrationOptionsCustom = async (email: string) => {
   });
 
   challenges[email] = options.challenge;
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  //check if user generated but did not verified
+  if (user && !user.isPasskey) {
+    throw new AppError('User already exists but not verified', 409, options);
+  }
+
+
+  console.log(`Generating registration options for ${email}`);
 
   // Save user temporarily (only username, real registration after verify)
   await prisma.user.create({
@@ -114,11 +122,11 @@ export const generateAuthenticationOptionsCustom = async (email: string) => {
   });
 
   if (!user || user.credentials.length === 0) {
-    throw new AppError('User not found',400);
+    throw new AppError('User not found', 400);
   }
 
   const options = await generateAuthenticationOptions({
-    timeout: 60000,
+    timeout: 30000,
     rpID,
     allowCredentials: user.credentials.map((cred: Credential) => ({
       id: isoBase64URL.fromBuffer(cred.credentialID),
@@ -146,16 +154,16 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   });
 
   if (!user) {
-    throw new AppError('User not found',400);
+    throw new AppError('User not found', 400);
   }
 
   // Find the credential that matches the credentialID from the assertionResponse
   const dbAuthenticator = user.credentials.find(
-    (credential: Credential) =>  isoBase64URL.fromBuffer(credential.credentialID) === assertionResponse.id
+    (credential: Credential) => isoBase64URL.fromBuffer(credential.credentialID) === assertionResponse.id
   );
 
   if (!dbAuthenticator) {
-    throw new AppError('User not found',400);
+    throw new AppError('User not found', 400);
   }
 
   // Perform authentication verification
@@ -165,7 +173,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
     expectedOrigin,
     expectedRPID: rpID,
     credential: {
-      id:  isoBase64URL.fromBuffer(dbAuthenticator.credentialID),
+      id: isoBase64URL.fromBuffer(dbAuthenticator.credentialID),
       publicKey: dbAuthenticator.credentialPublicKey,
       transports: dbAuthenticator.transports as AuthenticatorTransportFuture[],
       counter: dbAuthenticator.counter,
@@ -185,7 +193,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   // Generate JWT token
   const token = generateToken({ userId: user.id, username: user.email });
 
-  
+
   // Clear the challenge after successful verification
   delete challenges[email];
 
@@ -194,13 +202,30 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 
 
 // ========== Simple Email + Password Registration ==========
-export const simpleRegister = async (email: string, password: string) => {
+export const simpleRegister = async (email: string, password: string, deviceToken? : string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    throw new AppError('User already exists',400);
+    throw new AppError('User already exists', 400);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+
+  if (deviceToken){
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        notification : {
+          create : {
+            deviceToken : deviceToken
+          }
+        }
+      },
+      include :{
+        notification : true
+      }
+    });
+  }
 
   await prisma.user.create({
     data: {
@@ -215,12 +240,12 @@ export const simpleLogin = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !user.password) {
-    throw new Error('Invalid Credentials');
+    throw new AppError('Invalid Credentials',401);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new Error('Invalid Credentials');
+    throw new AppError('Invalid Credentials',401);
   }
 
 

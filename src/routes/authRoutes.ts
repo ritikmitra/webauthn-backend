@@ -6,6 +6,7 @@ import {
   verifyAuthenticationController,
   simpleRegisterController,
   simpleLoginController,
+  checkEmailExistsController
 } from '../controllers/authController';
 
 const router = Router();
@@ -16,5 +17,6 @@ router.post('/generate-authentication-options', generateAuthenticationOptionsCon
 router.post('/verify-authentication', verifyAuthenticationController);
 router.post('/register', simpleRegisterController);
 router.post('/login', simpleLoginController);
+router.post('/check-email-exists', checkEmailExistsController);
 
 export default router;
