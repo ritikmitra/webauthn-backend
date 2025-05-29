@@ -15,7 +15,7 @@ export const verifyRegistrationController = async (req: Request, res: Response, 
   try {
     const { username, attestationResponse } = req.body;
     await authService.verifyRegistration(username, attestationResponse);
-    res.status(200).send('Registration Verified');
+    res.status(200).json({ message: 'User registered successfully' });
   } catch (error) {
     next(error);
   }
@@ -36,7 +36,7 @@ export const verifyAuthenticationController = async (req: Request, res: Response
     const { username, assertionResponse } = req.body;
     const response = await authService.verifyAuthentication(username, assertionResponse);
     
-    res.status(200).send(response);
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }
@@ -46,7 +46,7 @@ export const simpleRegisterController = async (req: Request, res: Response, next
   try {
     const { username, password, deviceToken } = req.body;
     await authService.simpleRegister(username, password,deviceToken);
-    res.status(201).send('User Registered');
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     next(error);
   }
