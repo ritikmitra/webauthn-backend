@@ -191,13 +191,14 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   });
 
   // Generate JWT token
-  const token = generateToken({ userId: user.id, username: user.email });
+  const accessToken = generateToken({ userId: user.id, username: user.email });
+  const refreshToken = generateToken({ userId: user.id });
 
 
   // Clear the challenge after successful verification
   delete challenges[email];
 
-  return { token };
+  return { accessToken, refreshToken };
 };
 
 
@@ -249,7 +250,9 @@ export const simpleLogin = async (email: string, password: string) => {
   }
 
 
-  const token = generateToken({ userId: user.id, username: user.email });
+  const accessToken = generateToken({ userId: user.id, username: user.email });
 
-  return token;
+  const refreshToken = generateToken({ userId: user.id });
+
+  return { accessToken, refreshToken };
 };
