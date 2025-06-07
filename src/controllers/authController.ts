@@ -55,8 +55,8 @@ export const simpleRegisterController = async (req: Request, res: Response, next
 export const simpleLoginController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password } = req.body;
-    const token = await authService.simpleLogin(username, password);
-    res.json({ token });
+    const { accessToken , refreshToken} = await authService.simpleLogin(username, password);
+    res.json({ accessToken, refreshToken });
   } catch (error) {
     next(error);
   }
