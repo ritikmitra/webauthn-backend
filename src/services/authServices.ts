@@ -13,6 +13,8 @@ import { Credential } from '../../generated/prisma';
 import { isoBase64URL } from "@simplewebauthn/server/helpers"
 import generateToken from '../utils/authentication';
 import { AppError } from '../errors/AppError';
+import { authenticator } from "otplib"
+import { toDataURL } from 'qrcode';
 
 
 const rpName = process.env.RP_NAME || 'My App';
@@ -192,7 +194,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 
   // Generate JWT token
   const accessToken = generateToken({ userId: user.id, username: user.email });
-  const refreshToken = generateToken({ userId: user.id , username: user.email},"refresh");
+  const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
 
   // Clear the challenge after successful verification
@@ -252,7 +254,52 @@ export const simpleLogin = async (email: string, password: string) => {
 
   const accessToken = generateToken({ userId: user.id, username: user.email });
 
-  const refreshToken = generateToken({ userId: user.id, username: user.email },"refresh");
+  const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
   return { accessToken, refreshToken };
 };
+
+
+//generate qrcode for passkey
+export const generateQRCode = async (email: string) => {
+
+  const secret = authenticator.generateSecret();
+
+  // Store the secret in the user's record (you should store it securely)
+  await prisma.user.update({
+    where: { email },
+    data: { twoFaSecret: secret },
+  })
+
+  const service = 'WebAuthn Service';
+
+  const uri = authenticator.keyuri(email, service, secret)
+
+  const dataURL = await toDataURL(uri);
+
+  return { dataURL };
+}
+
+export const verifyQRCode = async (email: string, token: string) => {
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (user.isTwoFaEnabled) {
+    throw new AppError('2FA is already enabled for this user', 400);
+  }
+
+  if (!user.twoFaSecret) {
+    throw new AppError('2FA secret not found for this user', 404);
+  }
+
+  const isValid = authenticator.check(token, user.twoFaSecret);
+
+  if (!isValid) {
+    throw new AppError('Invalid token', 400);
+  }
+
+  return { message: 'Token is valid' };
+}

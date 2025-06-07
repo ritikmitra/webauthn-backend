@@ -72,3 +72,23 @@ export const checkEmailExistsController = async (req: Request, res: Response, ne
     next(error);
   }
 };
+
+export const generate2faOptionsController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { username } = req.user!;
+    const options = await authService.generateQRCode(username);
+    res.json(options);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verify2faController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, token } = req.body;
+    const isValid = await authService.verifyQRCode(email, token);
+    res.json({ isValid });
+  } catch (error) {
+    next(error);
+  }
+};
