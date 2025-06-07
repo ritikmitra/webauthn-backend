@@ -192,7 +192,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 
   // Generate JWT token
   const accessToken = generateToken({ userId: user.id, username: user.email });
-  const refreshToken = generateToken({ userId: user.id });
+  const refreshToken = generateToken({ userId: user.id , username: user.email},"refresh");
 
 
   // Clear the challenge after successful verification
@@ -252,7 +252,7 @@ export const simpleLogin = async (email: string, password: string) => {
 
   const accessToken = generateToken({ userId: user.id, username: user.email });
 
-  const refreshToken = generateToken({ userId: user.id });
+  const refreshToken = generateToken({ userId: user.id, username: user.email },"refresh");
 
   return { accessToken, refreshToken };
 };

@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes';
 import { errorHandler } from './middlewares/errorHandler';
-
+import { profileRouter } from './routes/profileRoutes';
 
 export const app = express();
 
@@ -20,6 +20,8 @@ app.use(express.json());
 
 // Routes
 app.use('/', authRoutes);
+
+app.use('/', profileRouter);
 
 // Error Middleware
 app.use(errorHandler);
