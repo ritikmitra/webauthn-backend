@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import * as authService from '../services/authServices';
+import * as authService from '../services/auth.services';
 
 export const generateRegistrationOptionsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
