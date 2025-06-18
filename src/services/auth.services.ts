@@ -191,8 +191,8 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   });
 
   // Generate JWT token
-  const accessToken = generateToken({ userId: user.id, username: user.email });
-  const refreshToken = generateToken({ userId: user.id , username: user.email},"refresh");
+  const accessToken = generateToken({ userId: user.id, username: user.email, role: user.role });
+  const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
 
   // Clear the challenge after successful verification
@@ -237,7 +237,7 @@ export const simpleRegister = async (email: string, password: string, deviceToke
 };
 
 // ========== Simple Email + Password Login ==========
-export const simpleLogin = async (email: string, password: string) => {
+export const simpleLogin = async (email: string, password: string, deviceToken?: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !user.password) {
@@ -249,10 +249,30 @@ export const simpleLogin = async (email: string, password: string) => {
     throw new AppError('Invalid Credentials', 401);
   }
 
+  if (deviceToken) {
+    // Check if device token already exists
+    const existingToken = await prisma.notification.findFirst({
+      where: {
+        userId: user.id,
+        deviceToken: deviceToken
+      }
+    });
 
-  const accessToken = generateToken({ userId: user.id, username: user.email });
+    if (!existingToken) {
+      // Create new notification entry with device token
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          deviceToken: deviceToken
+        }
+      });
+    }
+  }
 
-  const refreshToken = generateToken({ userId: user.id, username: user.email },"refresh");
+
+  const accessToken = generateToken({ userId: user.id, username: user.email, role: user.role });
+
+  const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
   return { accessToken, refreshToken };
 };

@@ -6,3 +6,5 @@ dist
 *.cert
 *.key
 *.pem
+ServiceAccountKey.json
+google-services.json

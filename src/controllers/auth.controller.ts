@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import * as authService from '../services/authServices';
+import * as authService from '../services/auth.services';
 
 export const generateRegistrationOptionsController = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -35,7 +35,7 @@ export const verifyAuthenticationController = async (req: Request, res: Response
   try {
     const { username, assertionResponse } = req.body;
     const response = await authService.verifyAuthentication(username, assertionResponse);
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -45,7 +45,7 @@ export const verifyAuthenticationController = async (req: Request, res: Response
 export const simpleRegisterController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password, deviceToken } = req.body;
-    await authService.simpleRegister(username, password,deviceToken);
+    await authService.simpleRegister(username, password, deviceToken);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     next(error);
@@ -54,8 +54,8 @@ export const simpleRegisterController = async (req: Request, res: Response, next
 
 export const simpleLoginController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password } = req.body;
-    const { accessToken , refreshToken} = await authService.simpleLogin(username, password);
+    const { username, password, deviceToken } = req.body;
+    const { accessToken, refreshToken } = await authService.simpleLogin(username, password, deviceToken);
     res.json({ accessToken, refreshToken });
   } catch (error) {
     next(error);

@@ -7,7 +7,7 @@ import {
   simpleRegisterController,
   simpleLoginController,
   checkEmailExistsController
-} from '../controllers/authController';
+} from '../controllers/auth.controller';
 
 const router = Router();
 
