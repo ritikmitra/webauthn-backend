@@ -191,7 +191,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
   });
 
   // Generate JWT token
-  const accessToken = generateToken({ userId: user.id, username: user.email });
+  const accessToken = generateToken({ userId: user.id, username: user.email, role: user.role });
   const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
 
@@ -270,7 +270,7 @@ export const simpleLogin = async (email: string, password: string, deviceToken?:
   }
 
 
-  const accessToken = generateToken({ userId: user.id, username: user.email });
+  const accessToken = generateToken({ userId: user.id, username: user.email, role: user.role });
 
   const refreshToken = generateToken({ userId: user.id, username: user.email }, "refresh");
 
