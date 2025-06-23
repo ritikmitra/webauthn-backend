@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../errors/AppError';
-import { getUserProfile, updateUserProfile,getAllUsers } from '../services/profile.services';
+import { getUserProfile, updateUserProfile,getAllUsers, getUserById } from '../services/profile.services';
 import { customJwtPayload } from '../types/constant';
 
 
@@ -38,3 +38,17 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
     next(error);
   }
 };
+
+export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      throw new AppError('id is required', 400);
+    }
+
+    const user = await getUserById(id);
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+} 
