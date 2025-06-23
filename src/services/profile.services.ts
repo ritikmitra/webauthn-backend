@@ -98,3 +98,21 @@ export const getUserDeviceTokens = async (userId: string) => {
 
   return deviceTokens;
 }
+
+export const getUserById = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      displayName: true,
+      email: true,
+      isPasskey: true,
+    }
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  return user;
+}
