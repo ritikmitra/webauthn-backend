@@ -49,10 +49,6 @@ export async function sendNotificationTextSingleDevice(token: string, title: str
                 'apns-collapse-id': `chat_${title}`,
             }
         },
-        data : {
-            from : title,
-            body,
-        }
     });
     return response;
 }
@@ -75,10 +71,6 @@ export async function sendNotificationTextMultipleDevices(tokens: string[], titl
                 'apns-collapse-id': `chat_${title}`,
             }
         },
-        data : {
-            from : title,
-            body,
-        }
     });
     return response;
 }
