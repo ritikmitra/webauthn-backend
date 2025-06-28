@@ -44,8 +44,8 @@ export const verifyAuthenticationController = async (req: Request, res: Response
 
 export const simpleRegisterController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { username, password, deviceToken } = req.body;
-    await authService.simpleRegister(username, password, deviceToken);
+    const { username, password, deviceToken, firstName, lastName } = req.body;
+    await authService.simpleRegister(username, password, deviceToken, firstName, lastName);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     next(error);

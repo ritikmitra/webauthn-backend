@@ -203,7 +203,7 @@ export const verifyAuthentication = async (email: string, assertionResponse: Aut
 
 
 // ========== Simple Email + Password Registration ==========
-export const simpleRegister = async (email: string, password: string, deviceToken?: string) => {
+export const simpleRegister = async (email: string, password: string, deviceToken?: string, firstName?: string, lastName?: string) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new AppError('User already exists', 400);
@@ -215,6 +215,7 @@ export const simpleRegister = async (email: string, password: string, deviceToke
     await prisma.user.create({
       data: {
         email,
+        displayName: `${firstName} ${lastName}`,
         password: hashedPassword,
         notification: {
           create: {

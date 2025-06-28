@@ -5,6 +5,9 @@ import http from 'http';
 import fs from 'fs';
 import { app } from './app';
 import { Server } from 'socket.io';
+import { getUserDeviceTokens } from './services/profile.services';
+import { AppError } from './errors/AppError';
+import { sendNotificationMultipleDevices, sendNotificationSingleDevice } from './services/notification.services';
 
 
 const PORT = process.env.PORT || 3000;
@@ -35,13 +38,32 @@ io.on('connection', (socket) => {
   // Join user room (1:1 or group)
   socket.on('join', (userId) => {
     socket.join(userId); // each user has their own room
-    console.log(`User ${userId} joined their room`);
   });
 
   // Send message to another user
-  socket.on('send-message', ({ to, message, from }) => {
-    console.log(`Message from ${from} to ${to}:`, message);
-    io.to(to).emit('receive-message', { from, message });
+  socket.on('send-message', async ({ to, message, from }) => {
+    const clients = await io.in(to).fetchSockets()
+    const isUserOnline = clients.length > 0;
+    if (isUserOnline) {
+      io.to(to).emit('receive-message', { from, message });
+    } else {
+      const token = await getUserDeviceTokens(to)
+      if (!token || token.length === 0) {
+        throw new AppError('No device tokens found for the user', 404);
+      }
+      // Extract device tokens from the token array
+      const deviceTokens = token.map(t => t.deviceToken);
+      if (deviceTokens.length > 1) {
+        // If there are multiple device tokens, send notification to all
+        const response = await sendNotificationMultipleDevices(deviceTokens, from, message);
+        return response;
+
+      } else {
+        // If there is only one device token, send notification to that single device
+        const response = await sendNotificationSingleDevice(deviceTokens[0], from, message);
+        return response;
+      }
+    }
   });
 
   socket.on('disconnect', () => {
