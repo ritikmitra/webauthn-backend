@@ -30,3 +30,55 @@ export async function sendNotificationMultipleDevices(tokens: string[], title: s
         throw new AppError('Failed to send notification to multiple devices', 500);
     }
 }
+
+export async function sendNotificationTextSingleDevice(token: string, title: string, body: string) {
+    const response = await message.send({
+        notification: {
+            title :`Message from ${title}`,
+            body,
+        },
+        token,
+        android : {
+            collapseKey : `msg_from_${title}`,
+            notification : {
+                tag: `chat_${title}`,
+            }
+        },
+        apns :{
+            headers : {
+                'apns-collapse-id': `chat_${title}`,
+            }
+        },
+        data : {
+            from : title,
+            body,
+        }
+    });
+    return response;
+}
+
+export async function sendNotificationTextMultipleDevices(tokens: string[], title: string, body: string) {
+    const response = await message.sendEachForMulticast({
+        notification: {
+            title :`Message from ${title}`,
+            body,
+        },
+        tokens,
+        android : {
+            collapseKey : `msg_from_${title}`,
+            notification : {
+                tag: `chat_${title}`,
+            }
+        },
+        apns :{
+            headers : {
+                'apns-collapse-id': `chat_${title}`,
+            }
+        },
+        data : {
+            from : title,
+            body,
+        }
+    });
+    return response;
+}

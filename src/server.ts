@@ -5,9 +5,9 @@ import http from 'http';
 import fs from 'fs';
 import { app } from './app';
 import { Server } from 'socket.io';
-import { getUserDeviceTokens } from './services/profile.services';
+import { getUserDeviceTokens, getUserProfile } from './services/profile.services';
 import { AppError } from './errors/AppError';
-import { sendNotificationMultipleDevices, sendNotificationSingleDevice } from './services/notification.services';
+import {  sendNotificationTextMultipleDevices, sendNotificationTextSingleDevice } from './services/notification.services';
 
 
 const PORT = process.env.PORT || 3000;
@@ -51,16 +51,17 @@ io.on('connection', (socket) => {
       if (!token || token.length === 0) {
         throw new AppError('No device tokens found for the user', 404);
       }
+      const fromUser = await getUserProfile(from)
       // Extract device tokens from the token array
       const deviceTokens = token.map(t => t.deviceToken);
       if (deviceTokens.length > 1) {
         // If there are multiple device tokens, send notification to all
-        const response = await sendNotificationMultipleDevices(deviceTokens, from, message);
+        const response = await sendNotificationTextMultipleDevices(deviceTokens, fromUser.displayName!, message);
         return response;
 
       } else {
         // If there is only one device token, send notification to that single device
-        const response = await sendNotificationSingleDevice(deviceTokens[0], from, message);
+        const response = await sendNotificationTextSingleDevice(deviceTokens[0], fromUser.displayName!, message);
         return response;
       }
     }
