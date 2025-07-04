@@ -40,8 +40,11 @@ export async function sendNotificationTextSingleDevice(token: string, title: str
         token,
         android : {
             collapseKey : `msg_from_${title}`,
+            priority: 'high',
             notification : {
                 tag: `chat_${title}`,
+                sound: 'default',
+                channelId: 'default',
             }
         },
         apns :{
